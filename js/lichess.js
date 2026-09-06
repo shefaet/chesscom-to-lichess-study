@@ -71,10 +71,28 @@ export async function revokeToken(token) {
   }
 }
 
+// The trailing slashes below are load-bearing — do not "tidy" them away.
+//
+// The Lichess iOS app claims these paths as Universal Links. From its
+// apple-app-site-association:
+//
+//     { "/": "/study/????????"            }   Studies
+//     { "/": "/study/????????/????????"   }   Studies with explicit chapter ID
+//
+// So navigating to a canonical study URL on iOS opens the native app, which
+// cannot create chapters or edit comments — the exact opposite of what we
+// want after an import.
+//
+// In those patterns `?` matches exactly one character, so a trailing slash
+// makes the path one character too long and the rule no longer matches. iOS
+// leaves the navigation alone, and Lichess 301s the slashed form back to the
+// canonical URL. Safari follows that redirect internally: a server redirect
+// does not re-trigger Universal Link matching, so we land on the website.
+
 export function chapterUrl(studyId, chapterId) {
-  return `${LICHESS}/study/${studyId}/${chapterId}`;
+  return `${LICHESS}/study/${studyId}/${chapterId}/`;
 }
 
 export function studyUrl(studyId) {
-  return `${LICHESS}/study/${studyId}`;
+  return `${LICHESS}/study/${studyId}/`;
 }

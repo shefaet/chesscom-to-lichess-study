@@ -110,6 +110,14 @@ Worth knowing:
   oriented to the colour you played.
 - The PGN is passed through **verbatim** — no parsing, no rewriting — so the
   clock comments survive into the study.
+- Study links deliberately carry a **trailing slash**. The Lichess iOS app
+  claims `/study/????????` and `/study/????????/????????` as Universal Links,
+  so a canonical link opens the native app — which can't create chapters or
+  edit comments. `?` matches exactly one character, so the extra slash misses
+  the pattern; Lichess then 301s to the canonical URL and Safari follows that
+  internally, because a server redirect doesn't re-trigger Universal Link
+  matching. Removing those slashes will silently reintroduce the bug.
+- `/oauth` is not claimed by the app, so connecting is unaffected.
 
 ## Files
 
