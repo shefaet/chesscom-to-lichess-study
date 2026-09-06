@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://api.chess.com https://lichess.org; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Game → Study</title>
+<link rel="stylesheet" href="app.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1b1b1b">
+</head>
+<body>
+
+<header class="bar">
+  <h1>Game → Study</h1>
+  <button id="settings-toggle" class="icon-btn" type="button" aria-label="Settings" aria-expanded="false">⚙</button>
+</header>
+
+<main>
+
+  <!-- Settings -->
+  <section id="settings" class="card hidden" aria-labelledby="settings-h">
+    <h2 id="settings-h">Settings</h2>
+
+    <label for="in-user">Chess.com username</label>
+    <input id="in-user" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
+           inputmode="text" placeholder="your-chesscom-name">
+
+    <label for="in-study">Lichess study ID</label>
+    <input id="in-study" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
+           maxlength="8" placeholder="8 characters">
+    <p class="hint">From the study URL: <span class="mono">lichess.org/study/<b>XXXXXXXX</b></span></p>
+
+    <div class="row">
+      <button id="save-settings" class="primary" type="button">Save</button>
+      <button id="close-settings" type="button">Close</button>
+    </div>
+
+    <hr>
+
+    <h3>Lichess account</h3>
+    <p id="auth-status" class="hint">Not connected.</p>
+    <div class="row">
+      <button id="connect" class="primary" type="button">Connect Lichess</button>
+      <button id="disconnect" class="danger hidden" type="button">Disconnect</button>
+    </div>
+    <p class="hint">Authorises <span class="mono">study:write</span> only, via OAuth PKCE.
+       Revoke any time at lichess.org/account/oauth/token.</p>
+  </section>
+
+  <!-- Status / errors -->
+  <div id="banner" class="banner hidden" role="status"></div>
+
+  <!-- Game list -->
+  <section id="games-section" class="hidden">
+    <div class="row spread">
+      <h2>Recent games</h2>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+    <p id="list-meta" class="hint"></p>
+    <ul id="games" class="games"></ul>
+  </section>
+
+  <!-- First-run prompt -->
+  <section id="setup-prompt" class="card hidden">
+    <h2>Set up</h2>
+    <p>Add your chess.com username and Lichess study ID, then connect your Lichess account.</p>
+    <button id="open-settings" class="primary" type="button">Open settings</button>
+  </section>
+
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
