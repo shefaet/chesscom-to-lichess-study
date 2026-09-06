@@ -13,8 +13,29 @@ function archiveUrl(user, date) {
   return `${API}/player/${encodeURIComponent(user.toLowerCase())}/games/${y}/${m}`;
 }
 
+/**
+ * Two cache-busts, because the layer that actually goes stale is the browser's,
+ * and Safari partitions its cache by top-level origin — so the copy this page
+ * holds is invisible from a tab opened straight at the API, and survives a
+ * browser restart. The archive says `max-age=5` and still gets served hours old.
+ *
+ * `no-store` is the real fix. The `t` parameter is a fallback for WebKit
+ * versions that ignore the `cache` option, and it is free: chess.com's CDN
+ * leaves the query string out of its cache key, so a unique `t` still lands on
+ * the same edge entry and adds no origin traffic. That is exactly backwards
+ * from what a cache-buster normally does, and it is why the param alone would
+ * not have worked either — it is the browser being dodged here, not the CDN.
+ *
+ * What must NOT be added: a `Cache-Control` request header. Preflight answers
+ * `access-control-allow-headers: Origin`, so it fails CORS and kills the fetch.
+ * Nor a cased username — those 301 to the lowercase path.
+ */
 async function fetchMonth(user, date) {
-  const res = await fetch(archiveUrl(user, date), { headers: { Accept: 'application/json' } });
+  const url = `${archiveUrl(user, date)}?t=${Date.now()}`;
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
   if (res.status === 404) throw new Error(`No chess.com player named "${user}".`);
   if (!res.ok) throw new Error(`Chess.com returned ${res.status}.`);
   const data = await res.json();

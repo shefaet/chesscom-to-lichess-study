@@ -30,6 +30,8 @@ const el = {
 let settings = loadSettings();
 let games = [];
 let busy = false;
+let loading = false;
+let fetchedAt = 0;
 
 // --- banner ---------------------------------------------------------------
 
@@ -116,31 +118,59 @@ function renderAuth(username = null) {
 // --- game list ------------------------------------------------------------
 
 async function loadGames() {
+  if (loading) return; // several things can ask for a reload at once
   if (!settingsComplete(settings) || !auth.isConnected()) return;
+  loading = true;
   el.refresh.disabled = true;
   say('Loading games…');
   try {
     games = await chesscom.fetchRecentGames(settings.chesscomUser);
+    fetchedAt = Date.now();
     clearBanner();
     renderGames();
   } catch (e) {
     handleError(e);
   } finally {
+    loading = false;
     el.refresh.disabled = false;
   }
 }
 
 el.refresh.addEventListener('click', loadGames);
 
+// Importing navigates away to Lichess, and the whole point of this page is to
+// be opened right after finishing a game elsewhere. Both routes back land on a
+// page the browser restored rather than re-ran, so `boot()` never fires again
+// and the list stays frozen at the games that existed when it was last loaded
+// — which is exactly one game short, every time. Reload whenever we are shown.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) loadGames();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') loadGames();
+});
+
+/**
+ * Wall-clock time of the last successful fetch, so a stale list is visible as
+ * one. Read from `fetchedAt` rather than the clock, because renderGames() also
+ * runs after an import, when nothing has been re-fetched.
+ */
+function checkedAt() {
+  if (!fetchedAt) return '';
+  const d = new Date(fetchedAt);
+  return ` Checked ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}.`;
+}
+
 function renderGames() {
   const imported = loadImported();
   el.games.replaceChildren();
 
   if (!games.length) {
-    el.listMeta.textContent = 'No finished games in the last two months.';
+    el.listMeta.textContent = `No finished games in the last two months.${checkedAt()}`;
     return;
   }
-  el.listMeta.textContent = `${games.length} most recent, newest first.`;
+  el.listMeta.textContent = `${games.length} most recent, newest first.${checkedAt()}`;
 
   for (const game of games) {
     el.games.append(gameRow(game, imported[game.uuid]));

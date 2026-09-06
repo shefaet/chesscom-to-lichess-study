@@ -104,6 +104,29 @@ Worth knowing:
 
 - Reads the current month's archive, plus the previous month if that is thin —
   so it still works on the 1st.
+- **The archive fetch is deliberately cache-busted twice**, and removing either
+  will silently reintroduce a stale game list. The archive advertises
+  `max-age=5` and is still served from the browser's cache hours later; because
+  Safari partitions its cache by top-level origin, that stale copy is invisible
+  from a tab opened straight at the API and survives a browser restart. The
+  symptom is that your newest game never appears while *changing the username
+  and changing it back* shows it instantly — a different URL, so a different
+  cache entry.
+  - `cache: 'no-store'` is the fix; `?t=<now>` is a fallback for WebKit builds
+    that ignore the `cache` option.
+  - The `t` parameter costs chess.com nothing: their CDN leaves the query
+    string out of its cache key, so a unique `t` still lands on the same edge
+    entry (`cf-cache-status: HIT`). This is backwards from a normal
+    cache-buster, and is why the parameter alone would not have been enough —
+    the layer being dodged is the browser, not the CDN.
+  - Do **not** "improve" this with a `Cache-Control` request header: preflight
+    answers `access-control-allow-headers: Origin`, so it fails CORS and kills
+    the fetch. Nor with a cased username — those 301 to the lowercase path.
+- The list also reloads whenever the page becomes visible, not just on
+  **Refresh**, since importing navigates away to Lichess and the browser can
+  restore this page without re-running any script. The header line shows when
+  the data was last fetched, which is what distinguishes "did not refetch" from
+  "chess.com does not have it yet".
 - Imported game UUIDs are remembered, so a game shows **Open ↗** instead of
   **Import** on a second visit. This is per-device.
 - Chapter names are `2026-09-04 · B vs opponent · 0-1`, and the board is
