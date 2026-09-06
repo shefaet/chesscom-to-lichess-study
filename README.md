@@ -34,15 +34,26 @@ modules, hostable on GitHub Pages as-is.
 
 Both settings persist in `localStorage` and can be changed any time.
 
-### Running locally
+### Running locally — only if you're editing the code
+
+There is **no server to run in normal use.** GitHub Pages hands the browser
+these files and every line of logic then runs on your phone; nothing executes
+on any machine but yours.
+
+To hack on it you do need to serve the folder over HTTP rather than
+double-clicking `index.html`, because browsers refuse to load ES modules from a
+`file://` origin (`blocked by CORS policy... origin 'null'`), and because
+Lichess cannot redirect back to a `file://` path — `redirect_uri` has to be an
+`http(s)` URL, so the OAuth flow is impossible from disk. Any static file
+server will do:
 
 ```sh
 python3 -m http.server 8000     # then open http://localhost:8000/
 ```
 
-Lichess permits `http://` redirect URIs on localhost, so the OAuth flow works
-in local dev. The `client_id` and `redirect_uri` are both derived from the
-page's own URL, so nothing needs reconfiguring between local and Pages.
+Lichess permits `http://` redirect URIs on localhost, so the full flow works in
+local dev. `client_id` and `redirect_uri` are both derived from the page's own
+URL, so nothing needs reconfiguring between localhost and Pages.
 
 ## How the auth works
 
